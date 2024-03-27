@@ -1,12 +1,16 @@
 import { Button, Container, Menu } from 'semantic-ui-react';
 
-export default function Narbar () {
+interface Props {
+    openForm : () => void;
+}
+
+export default function Narbar ({ openForm } : Props) {
     return (
         <Menu inverted>
             <Container>
                 <Menu.Item name='Activities'/>
                 <Menu.Item>
-                    <Button positive content='Create Activity'/>
+                    <Button onClick={openForm} positive content='Create Activity'/>
                 </Menu.Item>
             </Container>
         </Menu>

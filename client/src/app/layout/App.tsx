@@ -4,6 +4,7 @@ import { Activity } from '../models/activities';
 import Narbar from './Narbar';
 import { Container } from 'semantic-ui-react';
 import ActivityDasboard from '../../features/activities/dashboard/ActivityDasboard';
+import { v4 as uuid } from 'uuid';
 
 function App() {
 
@@ -38,9 +39,21 @@ function App() {
     setEditMode(false);
   }
 
+  function handleCreateOrEditActivity (activity : Activity) {
+    activity.id ? setActivities([...activities.filter(x=> x.id !== activity.id), activity]) : setActivities([...activities, { ...activity, id : uuid() }]);
+    setEditMode(false);
+    setSelectActivity(activity);
+  }
+
+  function handleDeleteActivity (id : string){
+    setActivities([
+      ...activities.filter(x=> x.id !== id)
+    ]);
+  }
+
   return (
     <>
-      <Narbar />
+      <Narbar openForm={handleFormOpen}/>
       <Container>
         <ActivityDasboard 
           activities={activities}
@@ -50,6 +63,8 @@ function App() {
           editMode={editMode}
           openForm= {handleFormOpen}
           closeForm={handleFormClose}
+          createOrEdit={handleCreateOrEditActivity}
+          deleteActivity={handleDeleteActivity}
         />
       </Container>
     </>
