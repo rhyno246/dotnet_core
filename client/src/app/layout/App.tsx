@@ -1,12 +1,16 @@
  import { useEffect, useState } from 'react'
-import axios from 'axios';
 import { Activity } from '../models/activities';
 import Narbar from './Narbar';
-import { Container } from 'semantic-ui-react';
+import { Button, Container } from 'semantic-ui-react';
 import ActivityDasboard from '../../features/activities/dashboard/ActivityDasboard';
 import { v4 as uuid } from 'uuid';
+import agent from '../api/agent';
+import { useStore } from '../stores/store';
+import { observer } from 'mobx-react-lite';
 
 function App() {
+
+  const { activityStore } =  useStore();
 
   const [activities , setActivities] = useState<Activity[]>([]);
   const [selectedActivity , setSelectActivity] = useState<Activity | undefined>(undefined);
@@ -14,9 +18,13 @@ function App() {
 
 
   useEffect(() => {
-    axios.get<Activity[]>('http://localhost:3000/api/Activites')
-    .then(res => {
-      setActivities(res.data);
+    agent.Activities.list().then(res => {
+      let activites : Activity[] = [];
+      res.forEach(activity => {
+        activity.date = activity.date.split('T')[0]
+        activites.push(activity);
+      })
+      setActivities(activites);
     }).catch(err => {
       console.log(err)
     })
@@ -40,21 +48,37 @@ function App() {
   }
 
   function handleCreateOrEditActivity (activity : Activity) {
-    activity.id ? setActivities([...activities.filter(x=> x.id !== activity.id), activity]) : setActivities([...activities, { ...activity, id : uuid() }]);
-    setEditMode(false);
-    setSelectActivity(activity);
+    if(activity.id){
+      agent.Activities.update(activity).then(() => {
+        setActivities([...activities.filter(x=> x.id !== activity.id), activity])
+        setSelectActivity(activity);
+        setEditMode(false);
+      });
+    }else{
+      activity.id = uuid();
+      agent.Activities.create(activity).then(() => {
+        setActivities([...activities, activity]);
+      })
+    }
   }
 
   function handleDeleteActivity (id : string){
-    setActivities([
-      ...activities.filter(x=> x.id !== id)
-    ]);
+    agent.Activities.delete(id).then(()=> {
+      setActivities([
+        ...activities.filter(x=> x.id !== id)
+      ]);
+    })
   }
 
   return (
     <>
       <Narbar openForm={handleFormOpen}/>
       <Container>
+
+        <h1>{ activityStore.title }</h1>
+
+        <Button onClick={activityStore.setTitle} content="add"/>
+
         <ActivityDasboard 
           activities={activities}
           selectedActivity={selectedActivity}
@@ -71,4 +95,4 @@ function App() {
   )
 }
 
-export default App
+export default observer(App)
